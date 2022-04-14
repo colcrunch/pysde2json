@@ -146,6 +146,10 @@ def run(
 
     ran = False
 
+    # Create the working directory if it does not exist.
+    if not os.path.exists(working_dir):
+        os.mkdir(working_dir)
+
     # Check and download files.
     if sde_version == "sqlite-latest":
         output_dir = output_dir + "latest/"
