@@ -171,7 +171,6 @@ def build_versions_index(output_dir: str, host_base_url: str):
                 'version': f.name,
                 'href': f"{host_base_url}/{f.name}/tables.json"
             })
-    print(versions)
     with open(output_dir+"versions.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(versions))
     return
