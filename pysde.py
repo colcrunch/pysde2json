@@ -3,7 +3,9 @@ import bz2
 import json
 import os
 import sqlite3
+from turtle import home
 from typing import Any
+from datetime import datetime
 
 import requests
 
@@ -137,11 +139,93 @@ def save_hash(output_dir: str):
         f.write(r.text)
 
 
+def build_tables_indexes(output_dir: str, host_base_url: str):
+    """
+    Builds any and all missing table indexes.
+    """
+    versions = [f for f in os.scandir(output_dir) if f.is_dir()]
+    for version in versions:
+        v_path = version.path
+        if not os.path.exists(str(v_path)+"/tables.json"):
+            files = [f for f in os.scandir(version.path) if not f.is_dir()]
+            tables = []
+            for file in files:
+                if file.name == "hash.md5":
+                    continue
+                tables.append({
+                    "name": file.name,
+                    "href": f"{host_base_url}/{version.name}/{file.name}"
+                })
+            with open(v_path+"/tables.json", "w", encoding="utf-8") as f:
+                f.write(json.dumps(tables))
+
+
+def build_versions_index(output_dir: str, host_base_url: str):
+    """
+    Builds the jsonfile that shows what versions are available on the server.
+    """
+    versions = []
+    for f in os.scandir(output_dir):
+        if f.is_dir():
+            versions.append({
+                'version': f.name,
+                'href': f"{host_base_url}/{f.name}/tables.json"
+            })
+    print(versions)
+    with open(output_dir+"versions.json", "w", encoding="utf-8") as f:
+        f.write(json.dumps(versions))
+    return
+
+
+def build_global_indexes(output_dir: str, host_base_url: str):
+    latest = False
+    if os.path.exists(output_dir + "latest/"):
+        latest = True
+        rel_hash_path = "latest/hash.md5"
+        last_updated_stamp = os.path.getmtime(output_dir + "latest/hash.md5")
+        last_updated = datetime.fromtimestamp(last_updated_stamp).strftime('%Y-%m-%d %H:%M')
+    
+    build_tables_indexes(output_dir, host_base_url)
+    build_versions_index(output_dir, host_base_url)
+    versions_index_rel = "versions.json"
+
+    latest_data=""
+    if latest:
+        latest_data = f"""
+        <br>
+        Last Updated: {last_updated}
+        <br>
+        <a href="{rel_hash_path}">Current MD5</a>
+        """
+
+    html = f"""
+    <html>
+        <body>
+            A simple SDE conversion to JSON files.
+            <br>
+            To see a list of available versions, see <a href="{versions_index_rel}">versions.json</a>
+            <br>
+            To access a table, visit /version/tablename.json.
+            <br>
+            Many thanks to FuzzySteve for the SDE conversions to SQLite and Squizz for the zzeve service.
+            {latest_data}
+            <br>
+            <br>
+            <small><a href="https://github.com/colcrunch/pysde2json">GitHub</a></small>
+        </body>
+    </html>
+    """
+
+    with open(output_dir + "/index.html", "w", encoding="utf-8") as f:
+        f.write(html)
+
+
 def run(
     sde_version: str="sqlite-latest",
     output_dir: str="/var/www/sde/",
     working_dir: str="/tmp/pysde/",
-    force: bool=False
+    force: bool=False,
+    host_base_url=""
     ):
 
     ran = False
@@ -152,29 +236,29 @@ def run(
 
     # Check and download files.
     if sde_version == "sqlite-latest":
-        output_dir = output_dir + "latest/"
+        json_output_dir = output_dir + "latest/"
         if not check_latest(output_dir) or force:
             if force:
                 print("Forcing update of latest SDE version.")
-            if not os.path.exists(output_dir):
-                os.mkdir(output_dir)
+            if not os.path.exists(json_output_dir):
+                os.mkdir(json_output_dir)
             # Download latest SDE
             get_sde(sde_version, working_dir)
 
             # Save the latest hash
-            save_hash(output_dir)
+            save_hash(json_output_dir)
             ran = True
         else:
             print("local SDE version already up to date.")
     else:
         # Check if the version already exists at the output location
         version = get_real_version(sde_version)
-        output_dir = output_dir + f"{version}/"
-        if not os.path.exists(output_dir+f'{version}/') or force:
+        json_output_dir = output_dir + f"{version}/"
+        if not os.path.exists(json_output_dir) or force:
             if force:
                 print("Forcing update of existing SDE version!")
-            if not os.path.exists(output_dir):
-                os.mkdir(output_dir)
+            if not os.path.exists(json_output_dir):
+                os.mkdir(json_output_dir)
             # Fownload the versioned SDE
             get_sde(version, working_dir)
             ran = True
@@ -193,8 +277,8 @@ def run(
                 with open(output_dir+f"{name}.json", "w", encoding="utf-8") as f:
                     f.write(json.dumps(items))
         
-        print("Updating indexes.")
-        # TODO: Create/update indexes for navigation.
+        print("Updating indexes...")
+        build_global_indexes(output_dir, host_base_url)
 
 
 def main():
@@ -233,6 +317,13 @@ def main():
         metavar="d",
         dest="working_dir",
         help="specifies the working directory to use. (Default: /tmp/pysde/)"
+    )
+    parser.add_argument(
+        '-b',
+        '--base_url',
+        metavar="url",
+        dest="host_base_url",
+        help="set the base url that your files will be available at. (Default: None)"
     )
     parser.add_argument(
         '-f',
