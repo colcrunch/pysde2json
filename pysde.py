@@ -246,7 +246,7 @@ def run(
             get_sde(sde_version, working_dir)
 
             # Save the latest hash
-            save_hash(json_output_dir)
+            save_hash(output_dir)
             ran = True
         else:
             print("local SDE version already up to date.")
@@ -274,7 +274,7 @@ def run(
             for table in tables:
                 name = table[0]
                 items = s.execute_named(f"SELECT * FROM {name};")
-                with open(output_dir+f"{name}.json", "w", encoding="utf-8") as f:
+                with open(json_output_dir+f"{name}.json", "w", encoding="utf-8") as f:
                     f.write(json.dumps(items))
         
         print("Updating indexes...")
