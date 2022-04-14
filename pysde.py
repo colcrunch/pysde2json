@@ -138,14 +138,14 @@ def save_hash(output_dir: str):
         f.write(r.text)
 
 
-def build_tables_indexes(output_dir: str, host_base_url: str):
+def build_tables_indexes(output_dir: str, host_base_url: str, force: bool=False):
     """
     Builds any and all missing table indexes.
     """
     versions = [f for f in os.scandir(output_dir) if f.is_dir()]
     for version in versions:
         v_path = version.path
-        if not os.path.exists(str(v_path)+"/tables.json"):
+        if not os.path.exists(str(v_path)+"/tables.json") or force:
             files = [f for f in os.scandir(version.path) if not f.is_dir()]
             tables = []
             for file in files:
@@ -175,7 +175,7 @@ def build_versions_index(output_dir: str, host_base_url: str):
     return
 
 
-def build_global_indexes(output_dir: str, host_base_url: str):
+def build_global_indexes(output_dir: str, host_base_url: str, force: bool):
     latest = False
     if os.path.exists(output_dir + "latest/"):
         latest = True
@@ -183,7 +183,7 @@ def build_global_indexes(output_dir: str, host_base_url: str):
         last_updated_stamp = os.path.getmtime(output_dir + "latest/hash.md5")
         last_updated = datetime.fromtimestamp(last_updated_stamp).strftime('%Y-%m-%d %H:%M')
     
-    build_tables_indexes(output_dir, host_base_url)
+    build_tables_indexes(output_dir, host_base_url, force)
     build_versions_index(output_dir, host_base_url)
     versions_index_rel = "versions.json"
 
@@ -282,7 +282,7 @@ def run(
                     f.write(json.dumps(items))
         
         print("Updating indexes...")
-        build_global_indexes(output_dir, host_base_url)
+        build_global_indexes(output_dir, host_base_url, force)
 
 
 def main():
