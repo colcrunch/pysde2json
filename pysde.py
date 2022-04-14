@@ -190,7 +190,7 @@ def run(
             for table in tables:
                 name = table[0]
                 items = s.execute_named(f"SELECT * FROM {name};")
-                with open(output_dir+f"{name}.json", "w") as f:
+                with open(output_dir+f"{name}.json", "w", encoding="utf-8") as f:
                     f.write(json.dumps(items))
         
         print("Updating indexes.")
