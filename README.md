@@ -13,6 +13,6 @@ To install pysde2json, simply run `pip install pysde2json`.
 ### Usage
 Once installed you can run the application via the commandline by running `pysde`.
 
-### Credit
+## Credit
 Inspired by (cvweiss/sde2json)[https://github.com/cvweiss/sde2json/].
 Relies on Fuzzy Steve's Fuzzwork SDE exports.
