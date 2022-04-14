@@ -267,7 +267,13 @@ def run(
         # Process SDE
         print("Processing SDE tables!")
         with SDEConn(working_dir+"sde.db") as s:
-            tables = s.execute_raw("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name;")
+            sqlite_minor = int(sqlite3.sqlite_version.split(".")[1])
+            if sqlite_minor < 36:
+                schema_table = "sqlite_master"
+            else:
+                schema_table = "sqlite_schema"
+
+            tables = s.execute_raw(f"SELECT name FROM {schema_table} WHERE type='table' ORDER BY name;")
 
             for table in tables:
                 name = table[0]
