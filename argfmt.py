@@ -16,7 +16,7 @@ class CustomHelpFormatter(argparse.HelpFormatter):
                 parts.extend(action.option_strings)
 
             # if the Optional takes a value, format is:
-            #    -s ARGS, --long ARGS
+            #    -s, --long ARGS
             else:
                 default = self._get_default_metavar_for_optional(action)
                 args_string = self._format_args(action, default)
