@@ -9,7 +9,7 @@ from datetime import datetime
 
 import requests
 
-from __init__ import __VERSION__
+from __init__ import __version__
 from argfmt import CustomHelpFormatter
 
 
@@ -294,7 +294,7 @@ def main():
         '-v',
         '--version',
         action='version',
-        version=f'pysde2json v{__VERSION__}'
+        version=f'pysde2json v{__version__}'
     )
     parser.add_argument(
         '-s',
